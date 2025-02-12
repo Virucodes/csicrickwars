@@ -1,145 +1,86 @@
 import React, { useState, useEffect } from "react";
-import { Card } from "./ui/card";
-import { CardContent } from "./ui/card";
-import { CardHeader } from "./ui/card";
-import { CardTitle } from "./ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { Alert, AlertDescription } from "./ui/alert";
-import { Timer, User } from 'lucide-react';
+import { Star } from "lucide-react";
+import axios from "axios";
 
-const AuctionPage = ({ teamData, onPlayerPurchase }) => {
-  const [timeLeft, setTimeLeft] = useState(60);
-  const [currentBid, setCurrentBid] = useState(0);
-  const [bidAmount, setBidAmount] = useState('');
-  const [currentPlayer, setCurrentPlayer] = useState({
-    name: "MS Dhoni",
-    role: "Wicket Keeper",
-    basePrice: 1000,
-    stats: {
-      matches: 350,
-      average: 38.09,
-      strikeRate: 92.5
-    }
-  });
+const PlayersRatingPage = () => {
+  const [players, setPlayers] = useState([]);
+  const [ratings, setRatings] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    if (timeLeft > 0) {
-      const timer = setInterval(() => {
-        setTimeLeft(prev => prev - 1);
-      }, 1000);
-      return () => clearInterval(timer);
-    }
-  }, [timeLeft]);
+    const fetchPlayers = async () => {
+      try {
+        const response = await axios.get("http://localhost:4000/players"); // Update API endpoint
+        console.log(response)
+        setPlayers(response.data);
+      } catch (err) {
+        setError("Failed to load players");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const handleBid = () => {
-    if (Number(bidAmount) > currentBid) {
-      setCurrentBid(Number(bidAmount));
-      setBidAmount('');
-    }
+    fetchPlayers();
+  }, []);
+
+  const handleRatingChange = (id, value) => {
+    const rating = Math.min(Math.max(value, 1), 10);
+    setRatings((prev) => ({ ...prev, [id]: rating }));
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4">
-      <div className="max-w-6xl mx-auto space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Current Player Card */}
-          <Card className="md:col-span-2">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>Current Player</span>
-                <div className="flex items-center space-x-2 text-orange-500">
-                  <Timer className="h-5 w-5" />
-                  <span>{timeLeft}s</span>
-                </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-start space-x-4">
-                <div className="h-24 w-24 bg-gray-200 rounded-lg flex items-center justify-center">
-                  <User className="h-12 w-12 text-gray-400" />
-                </div>
-                <div className="space-y-2">
-                  <h3 className="text-xl font-bold">{currentPlayer.name}</h3>
-                  <p className="text-gray-600">{currentPlayer.role}</p>
-                  <div className="grid grid-cols-3 gap-4 text-sm">
-                    <div>
-                      <p className="text-gray-500">Matches</p>
-                      <p className="font-semibold">{currentPlayer.stats.matches}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Average</p>
-                      <p className="font-semibold">{currentPlayer.stats.average}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Strike Rate</p>
-                      <p className="font-semibold">{currentPlayer.stats.strikeRate}</p>
-                    </div>
+    <div className="min-h-screen bg-gray-100 p-6">
+      <div className="max-w-5xl mx-auto">
+        <h1 className="text-3xl font-bold text-center mb-6 text-primary">Rate Your Favorite Players</h1>
+
+        {loading ? (
+          <p className="text-center text-gray-600">Loading players...</p>
+        ) : error ? (
+          <p className="text-center text-red-500">{error}</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {players.map((player) => (
+              <Card key={player._id} className="shadow-lg rounded-xl overflow-hidden">
+               <img 
+  src="https://i.imgur.com/1DhnlAu.jpeg"
+ 
+  alt={player.name} 
+  className="h-38 w-full object-cover"
+/>
+
+                <CardHeader className="p-4">
+                  <CardTitle className="text-xl font-bold">{player.name}</CardTitle>
+                  <p className="text-gray-500">{player.role}</p>
+                  <p className="text-green-600 font-semibold">₹{player.price}</p>
+                </CardHeader>
+                <CardContent className="p-4 space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <Star className="text-yellow-500 w-5 h-5" />
+                    <span className="font-medium">Rate (1-10):</span>
                   </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Bidding Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Current Bid</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="text-3xl font-bold text-center text-green-600">
-                ₹{currentBid}
-              </div>
-              <div className="space-y-2">
-                <Input
-                  type="number"
-                  placeholder="Enter bid amount"
-                  value={bidAmount}
-                  onChange={(e) => setBidAmount(e.target.value)}
-                />
-                <Button 
-                  className="w-full"
-                  onClick={handleBid}
-                  disabled={timeLeft === 0}
-                >
-                  Place Bid
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Team Status */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Your Team Status</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <h4 className="font-semibold">Batsmen ({teamData?.purchasedPlayers?.filter(p => p.role === "BAT").length}/3)</h4>
-                <p className="text-sm text-gray-500">
-                  {3 - (teamData?.purchasedPlayers?.filter(p => p.role === "BAT").length || 0)} slots remaining
-                </p>
-              </div>
-              <div>
-                <h4 className="font-semibold">Bowlers ({teamData?.purchasedPlayers?.filter(p => p.role === "BOWL").length}/3)</h4>
-                <p className="text-sm text-gray-500">
-                  {3 - (teamData?.purchasedPlayers?.filter(p => p.role === "BOWL").length || 0)} slots remaining
-                </p>
-              </div>
-              <div>
-                <h4 className="font-semibold">Wicket Keeper ({teamData?.purchasedPlayers?.filter(p => p.role === "WK").length}/1)</h4>
-                <p className="text-sm text-gray-500">
-                  {1 - (teamData?.purchasedPlayers?.filter(p => p.role === "WK").length || 0)} slot remaining
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+                  <Input
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={ratings[player._id] || ""}
+                    onChange={(e) => handleRatingChange(player._id, Number(e.target.value))}
+                    className="w-full border-gray-300 rounded-md"
+                  />
+                  <Button className="w-full bg-primary text-white" disabled={!ratings[player._id]}>
+                    Submit Rating
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
-export default AuctionPage;
+export default PlayersRatingPage;

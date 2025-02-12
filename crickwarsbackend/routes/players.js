@@ -2,10 +2,10 @@ const express = require("express");
 const Player = require("../models/Player"); // Import Player model
 const router = express.Router();
 
-/* GET all players (Fetch name & image only) */
+/* GET all players (Fetch name, image & price only) */
 router.get("/", async (req, res) => {
   try {
-    const players = await Player.find({}, "name image"); // Fetch only name & image
+    const players = await Player.find({}, "name img price"); // Fetch only required fields
     if (players.length > 0) res.status(200).json(players);
     else res.status(404).json({ error: "No players found" });
   } catch (error) {
@@ -13,10 +13,10 @@ router.get("/", async (req, res) => {
   }
 });
 
-/* GET a single player by ID */
+/* GET a single player by ID (Fetch name, image & price only) */
 router.get("/:id", async (req, res) => {
   try {
-    const player = await Player.findById(req.params.id, "name image");
+    const player = await Player.findById(req.params.id, "name img price");
     if (player) res.status(200).json(player);
     else res.status(404).json({ error: "No player found" });
   } catch (error) {
@@ -24,11 +24,11 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-/* CREATE a new player (With Image) */
+/* CREATE a new player (With Image & Price) */
 router.post("/", async (req, res) => {
   try {
-    const { name, age, team, role, image } = req.body;
-    const newPlayer = new Player({ name, age, team, role, image });
+    const { name, age, team, role, price, image } = req.body;
+    const newPlayer = new Player({ name, age, team, role, price, image });
     await newPlayer.save();
     res.status(201).json({ message: "Player added successfully", player: newPlayer });
   } catch (error) {
